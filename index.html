@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harajatlarim</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /*
+    Token'lar — "elektromobil kabinasi" mavzusi: cheksiz kosmik qorong'ilik,
+    elektr-ko'k va binafsha nurlanish, aniq geometrik raqamlar (spidometr hissi).
+  */
+  :root {
+    --bg-0: #06070f;
+    --bg-1: #0a0b1c;
+    --bg-2: #120a26;
+    --panel: rgba(255,255,255,.045);
+    --panel-solid: #13142a;
+    --panel-2: #191a35;
+    --hair: rgba(148,155,255,.16);
+    --hair-soft: rgba(148,155,255,.09);
+    --text: #eef0ff;
+    --muted: #8489ac;
+    --muted-2: #5d6289;
+    --blue: #4f7dff;
+    --violet: #9b5cff;
+    --grad: linear-gradient(100deg, var(--blue) 0%, var(--violet) 100%);
+    --danger: #ff5476;
+    --ok: #35e0b0;
+    --glow: 0 0 0 1px rgba(148,155,255,.12), 0 20px 50px -20px rgba(79,90,255,.35);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(120% 60% at 15% -10%, rgba(79,90,255,.16), transparent 60%),
+      radial-gradient(90% 55% at 100% 0%, rgba(155,92,255,.14), transparent 55%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 55%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    padding: calc(18px + env(safe-area-inset-top, 0px)) 16px calc(96px + env(safe-area-inset-bottom, 0px)) 16px;
+    letter-spacing: -0.01em;
+  }
+  h1 {
+    font-size: 22px; font-weight: 700; margin: 2px 0 2px; letter-spacing: -0.02em;
+  }
+  .muted { color: var(--muted); font-size: 13px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--hair); border-radius: 20px;
+    padding: 18px; margin-top: 14px; backdrop-filter: blur(18px);
+    box-shadow: var(--glow);
+  }
+  .row { display: flex; justify-content: space-between; align-items: center; }
+  .total {
+    font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 700; margin: 8px 0 2px;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    letter-spacing: -0.01em;
+  }
+  .budget-bar {
+    height: 7px; border-radius: 4px; background: var(--panel-2); overflow: hidden; margin-top: 12px;
+    border: 1px solid var(--hair-soft);
+  }
+  .budget-fill { height: 100%; background: var(--grad); transition: width .35s ease; }
+  .budget-fill.over { background: linear-gradient(100deg, var(--danger), #ff8a5c); }
+  .cat-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; }
+  .cat-row .label { flex: 1; font-size: 14px; color: var(--text); }
+  .cat-row .amt {
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; white-space: nowrap;
+  }
+  .bar-track { flex: 1.4; height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; border: 1px solid var(--hair-soft); }
+  .bar-fill { height: 100%; background: var(--grad); border-radius: 3px; }
+  .tx {
+    display: flex; justify-content: space-between; align-items: center; padding: 11px 0;
+    border-bottom: 1px solid var(--hair-soft);
+  }
+  .tx:last-child { border-bottom: none; }
+  .tx .meta { font-size: 12px; color: var(--muted-2); margin-top: 2px; }
+  .tx .amt { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .tx button {
+    background: var(--panel-2); border: 1px solid var(--hair-soft); border-radius: 8px;
+    color: var(--muted); font-size: 14px; cursor: pointer; padding: 6px 9px;
+  }
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--hair); border-radius: 12px;
+    padding: 8px 14px; font-size: 13px; text-align: center; color: var(--text);
+  }
+  input, select {
+    width: 100%; padding: 13px; border-radius: 12px; border: 1px solid var(--hair);
+    background: var(--panel-solid); color: var(--text); font-size: 15px; margin-top: 8px;
+    font-family: inherit; outline: none;
+  }
+  input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(79,125,255,.18); }
+  input::placeholder { color: var(--muted-2); }
+  label {
+    font-size: 11px; color: var(--muted); margin-top: 14px; display: block;
+    text-transform: uppercase; letter-spacing: .07em;
+  }
+  .catgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+  .catbtn {
+    background: var(--panel-solid); border: 1px solid var(--hair); border-radius: 14px;
+    padding: 12px 4px; text-align: center; font-size: 21px; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+  }
+  .catbtn .t { font-size: 10px; color: var(--muted); display: block; margin-top: 4px; }
+  .catbtn.sel {
+    border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue), 0 8px 20px -8px rgba(79,125,255,.6);
+    background: linear-gradient(160deg, rgba(79,125,255,.14), rgba(155,92,255,.10));
+  }
+  .primary-btn {
+    width: 100%; padding: 15px; border-radius: 14px; border: none; background: var(--grad);
+    color: #fff; font-size: 15px; font-weight: 700; margin-top: 16px; cursor: pointer;
+    box-shadow: 0 14px 30px -12px rgba(79,90,255,.55); letter-spacing: -0.01em;
+  }
+  .primary-btn:disabled { opacity: .45; box-shadow: none; }
+  .navbar {
+    position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    background: rgba(15,16,34,.78); border: 1px solid var(--hair); backdrop-filter: blur(20px);
+    border-radius: 20px; display: flex; padding: 8px; box-shadow: 0 20px 40px -18px rgba(0,0,0,.6);
+  }
+  .navbtn {
+    flex: 1; text-align: center; padding: 8px 0; font-size: 11px; color: var(--muted-2); cursor: pointer;
+    border-radius: 14px; transition: color .15s;
+  }
+  .navbtn .ic { font-size: 19px; display: block; margin-bottom: 2px; filter: grayscale(1); opacity: .6; }
+  .navbtn.active { color: var(--text); background: var(--panel-2); }
+  .navbtn.active .ic { filter: none; opacity: 1; }
+  .empty { text-align: center; color: var(--muted-2); padding: 34px 0; font-size: 13px; }
+  .month-nav {
+    width: 30px; height: 30px; border-radius: 9px; background: var(--panel-2);
+    border: 1px solid var(--hair-soft); display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--text); cursor: pointer; user-select: none;
+  }
+  .month-nav.disabled { opacity: .3; pointer-events: none; }
+  .edit-hint { font-size: 11px; color: var(--muted-2); margin-top: 2px; }
+  .toast {
+    position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px;
+    background: rgba(19,20,42,.92); border: 1px solid var(--hair); border-radius: 14px; padding: 13px 16px;
+    text-align: center; font-size: 14px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 50;
+    backdrop-filter: blur(16px); box-shadow: var(--glow);
+  }
+  .toast.show { opacity: 1; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- ===================== DASHBOARD ===================== -->
+<section id="screen-home" class="screen active">
+  <h1>Harajatlarim</h1>
+  <div class="row" style="margin-top:2px">
+    <div class="month-nav" id="monthPrev">‹</div>
+    <div class="muted" id="monthLabel" style="font-weight:600;color:var(--text);flex:1;text-align:center">—</div>
+    <div class="month-nav" id="monthNext">›</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <div class="muted">Shu oy jami</div>
+        <div class="total" id="totalAmount">0</div>
+        <div class="muted" id="dailyAvg" style="font-size:12px"></div>
+        <div class="chip" id="topCatChip" style="display:inline-block;margin-top:8px">—</div>
+      </div>
+      <canvas id="donutChart" width="88" height="88"></canvas>
+    </div>
+    <div id="budgetBlock" style="display:none">
+      <div class="budget-bar"><div class="budget-fill" id="budgetFill" style="width:0%"></div></div>
+      <div class="muted" id="budgetText" style="margin-top:6px;font-size:12px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">Kategoriyalar</div>
+    <div id="categoryList"></div>
+    <div class="empty" id="categoryEmpty" style="display:none">Bu oy hali harajat yo'q</div>
+  </div>
+
+  <div class="card" id="userCard" style="display:none">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">👥 Kim qancha sarfladi</div>
+    <div id="userList"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">So'nggi 3 oy — eng ko'p sarflangan</div>
+    <div id="topList"></div>
+  </div>
+</section>
+
+<!-- ===================== TARIX ===================== -->
+<section id="screen-history" class="screen">
+  <h1>Tarix</h1>
+  <div class="card">
+    <div id="txList"></div>
+    <div class="empty" id="txEmpty" style="display:none">Harajat topilmadi</div>
+  </div>
+</section>
+
+<!-- ===================== QO'SHISH ===================== -->
+<section id="screen-add" class="screen">
+  <h1>Harajat qo'shish</h1>
+  <div class="card">
+    <label>Summa</label>
+    <input id="addAmount" type="number" inputmode="decimal" placeholder="masalan: 50000">
+    <div class="catgrid" id="currencyGrid" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div class="muted" id="convertHint" style="margin-top:6px;min-height:16px"></div>
+
+    <label>Kategoriya</label>
+    <div class="catgrid" id="catGrid"></div>
+
+    <label>Izoh (ixtiyoriy)</label>
+    <input id="addNote" type="text" placeholder="masalan: non va sut" maxlength="60">
+
+    <button class="primary-btn" id="addSubmit">Saqlash</button>
+  </div>
+</section>
+
+<!-- ===================== SOZLAMALAR ===================== -->
+<section id="screen-settings" class="screen">
+  <h1>Sozlamalar</h1>
+  <div class="card">
+    <label>Valyuta</label>
+    <select id="setCurrency">
+      <option value="UZS">UZS — so'm</option>
+      <option value="USD">USD — $</option>
+      <option value="EUR">EUR — €</option>
+      <option value="RUB">RUB — ₽</option>
+    </select>
+
+    <label>Oylik byudjet (0 — limitsiz)</label>
+    <input id="setBudget" type="number" inputmode="decimal" placeholder="masalan: 2000000">
+
+    <button class="primary-btn" id="setSubmit">Saqlash</button>
+  </div>
+
+  <div class="card">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">Joriy kurs (1 birlik = necha so'm)</div>
+    <div id="ratesInfo"></div>
+    <div class="muted" style="margin-top:6px;font-size:11px">Har 6 soatda yangilanadi</div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">Ma'lumotlar</div>
+    <div class="muted" style="margin-bottom:8px">Barcha harajatlaringizni Excel uchun CSV fayl qilib yuklab oling.</div>
+    <button class="primary-btn" id="exportBtn" style="margin-top:0">📤 CSV yuklab olish</button>
+  </div>
+</section>
+
+<div class="navbar">
+  <div class="navbtn active" data-screen="home"><span class="ic">📊</span>Bosh sahifa</div>
+  <div class="navbtn" data-screen="history"><span class="ic">🕘</span>Tarix</div>
+  <div class="navbtn" data-screen="add"><span class="ic">➕</span>Qo'shish</div>
+  <div class="navbtn" data-screen="settings"><span class="ic">⚙️</span>Sozlama</div>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+tg?.ready();
+tg?.expand();
+if (tg?.colorScheme) document.documentElement.setAttribute('data-theme', tg.colorScheme);
+
+// Backend manzili: shu sahifa ?api=https://... bilan ochilsa o'shani ishlatadi,
+// aks holda pastdagi standart manzilni tahrirlang.
+const params = new URLSearchParams(location.search);
+const API_BASE = params.get('api') || 'https://SIZNING-BACKEND.onrender.com';
+const initData = tg?.initData || '';
+
+const CATEGORY_ICONS = {
+  oziq: '🛒', kiyim: '👕', poyabzal: '👟', kommunal: '💡',
+  transport: '🚗', sogliq: '💊', talim: '🎓', boshqa: '📦',
+};
+let CATEGORIES = {}; // backend'dan /api/settings orqali to'ldiriladi
+let CURRENCY_SIGNS = {};
+let selectedCategory = null;
+
+function fmt(n, currency) {
+  const sign = CURRENCY_SIGNS[currency] || currency || '';
+  return Math.round(n).toLocaleString('fr-FR').replace(/,/g, ' ') + ' ' + sign;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(API_BASE + path, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': initData, ...(options.headers || {}) },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || ('Xatolik: ' + res.status));
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+// ------------------------------------------------------------------ navigatsiya
+document.querySelectorAll('.navbtn').forEach(btn => {
+  btn.addEventListener('click', () => switchScreen(btn.dataset.screen));
+});
+
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelector(`.navbtn[data-screen="${name}"]`).classList.add('active');
+  if (name === 'home') loadHome();
+  if (name === 'history') loadHistory();
+}
+
+// ----------------------------------------------------------------------- bosh sahifa
+let currentMonth = null; // null = joriy oy; backend javobidagi 'month' bilan to'ldiriladi
+
+function drawDonut(byCategory, total) {
+  const canvas = document.getElementById('donutChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = 88 * dpr; canvas.height = 88 * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, 88, 88);
+  const cx = 44, cy = 44, rOuter = 40, rInner = 26;
+  if (!total || !byCategory.length) {
+    ctx.strokeStyle = 'rgba(148,155,255,.15)';
+    ctx.lineWidth = rOuter - rInner;
+    ctx.beginPath(); ctx.arc(cx, cy, (rOuter + rInner) / 2, 0, Math.PI * 2); ctx.stroke();
+    return;
+  }
+  const gradientStops = ['#4f7dff', '#7566ff', '#9b5cff', '#c750f0', '#ff5476', '#ff9a5c', '#35e0b0', '#5cc8ff'];
+  let angle = -Math.PI / 2;
+  byCategory.forEach((c, i) => {
+    const slice = (c.amount / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, rOuter, angle, angle + slice);
+    ctx.closePath();
+    ctx.fillStyle = gradientStops[i % gradientStops.length];
+    ctx.fill();
+    angle += slice;
+  });
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath(); ctx.arc(cx, cy, rInner, 0, Math.PI * 2); ctx.fill();
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+async function loadHome() {
+  try {
+    const monthQuery = currentMonth ? `?month=${currentMonth}` : '';
+    const [summary, top] = await Promise.all([api('/api/summary' + monthQuery), api('/api/top')]);
+    CURRENCY_SIGNS = { UZS: "so'm", USD: '$', EUR: '€', RUB: '₽' };
+    currentMonth = summary.month;
+
+    document.getElementById('monthLabel').textContent = summary.month;
+    document.getElementById('monthNext').classList.toggle('disabled', !summary.next_month);
+    document.getElementById('totalAmount').textContent = fmt(summary.total, summary.currency);
+    document.getElementById('topCatChip').textContent = summary.top_category || '—';
+    document.getElementById('dailyAvg').textContent = summary.daily_avg
+      ? `Kuniga o'rtacha: ${fmt(summary.daily_avg, summary.currency)}` : '';
+
+    drawDonut(summary.by_category, summary.total);
+
+    const budgetBlock = document.getElementById('budgetBlock');
+    if (summary.budget > 0) {
+      budgetBlock.style.display = 'block';
+      const pct = Math.min(100, Math.round((summary.total / summary.budget) * 100));
+      const fill = document.getElementById('budgetFill');
+      fill.style.width = pct + '%';
+      fill.classList.toggle('over', summary.total > summary.budget);
+      const left = summary.budget - summary.total;
+      document.getElementById('budgetText').textContent = left >= 0
+        ? `Byudjetdan qolgan: ${fmt(left, summary.currency)} (${pct}%)`
+        : `Byudjetdan ${fmt(-left, summary.currency)} oshib ketdi!`;
+    } else {
+      budgetBlock.style.display = 'none';
+    }
+
+    const list = document.getElementById('categoryList');
+    const empty = document.getElementById('categoryEmpty');
+    list.innerHTML = '';
+    empty.style.display = summary.by_category.length ? 'none' : 'block';
+    const max = Math.max(1, ...summary.by_category.map(c => c.amount));
+    summary.by_category.forEach(c => {
+      const pct = Math.round((c.amount / max) * 100);
+      const row = document.createElement('div');
+      row.className = 'cat-row';
+      row.innerHTML = `
+        <div class="label">${CATEGORY_ICONS[c.key] || '📦'} ${c.label.replace(/^\S+\s/, '')}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="amt">${fmt(c.amount, summary.currency)}</div>`;
+      list.appendChild(row);
+    });
+
+    const userCard = document.getElementById('userCard');
+    const userList = document.getElementById('userList');
+    userCard.style.display = summary.by_user.length ? 'block' : 'none';
+    userList.innerHTML = '';
+    summary.by_user.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'cat-row';
+      row.innerHTML = `<div class="label">${u.name}</div><div class="amt">${fmt(u.amount, summary.currency)}</div>`;
+      userList.appendChild(row);
+    });
+
+    const topList = document.getElementById('topList');
+    topList.innerHTML = '';
+    top.forEach((c, i) => {
+      const row = document.createElement('div');
+      row.className = 'cat-row';
+      row.innerHTML = `<div class="label">${i + 1}. ${c.label}</div><div class="amt">${fmt(c.amount, summary.currency)}</div>`;
+      topList.appendChild(row);
+    });
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+document.getElementById('monthPrev').addEventListener('click', async () => {
+  const s = await api('/api/summary' + (currentMonth ? `?month=${currentMonth}` : ''));
+  currentMonth = s.prev_month;
+  loadHome();
+});
+document.getElementById('monthNext').addEventListener('click', async () => {
+  if (document.getElementById('monthNext').classList.contains('disabled')) return;
+  const s = await api('/api/summary' + (currentMonth ? `?month=${currentMonth}` : ''));
+  if (s.next_month) { currentMonth = s.next_month; loadHome(); }
+});
+
+// -------------------------------------------------------------------------- tarix
+async function loadHistory() {
+  try {
+    const monthQuery = currentMonth ? `&month=${currentMonth}` : '';
+    const txs = await api('/api/expenses?limit=50' + monthQuery);
+    const list = document.getElementById('txList');
+    const empty = document.getElementById('txEmpty');
+    list.innerHTML = '';
+    empty.style.display = txs.length ? 'none' : 'block';
+    txs.forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'tx';
+      const origLine = t.orig_currency && t.orig_currency !== t.currency
+        ? ` · ${fmt(t.orig_amount, t.orig_currency)}` : '';
+      row.innerHTML = `
+        <div class="tx-info" style="cursor:pointer">
+          <div>${CATEGORY_ICONS[t.category] || '📦'} ${t.label.replace(/^\S+\s/, '')}${t.note ? ' · ' + t.note : ''}</div>
+          <div class="meta">${t.date.slice(5, 16)} · ${t.user}${origLine} <span class="edit-hint">· tahrirlash uchun bosing</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="amt">${fmt(t.amount, t.currency)}</div>
+          <button data-id="${t.id}">🗑</button>
+        </div>`;
+      row.querySelector('.tx-info').addEventListener('click', () => openEdit(t));
+      row.querySelector('button').addEventListener('click', (ev) => { ev.stopPropagation(); deleteTx(t.id); });
+      list.appendChild(row);
+    });
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+async function deleteTx(id) {
+  try {
+    await api('/api/expenses/' + id, { method: 'DELETE' });
+    tg?.HapticFeedback?.notificationOccurred('success');
+    loadHistory();
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+// ------------------------------------------------------------------- qo'shish
+let selectedCurrency = 'UZS';
+let exchangeRates = { UZS: 1 };
+
+function buildCategoryGrid() {
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = '';
+  Object.entries(CATEGORY_ICONS).forEach(([key, icon]) => {
+    const btn = document.createElement('div');
+    btn.className = 'catbtn';
+    btn.dataset.key = key;
+    const label = (CATEGORIES[key] || key).replace(/^\S+\s/, '');
+    btn.innerHTML = `${icon}<span class="t">${label}</span>`;
+    btn.addEventListener('click', () => {
+      selectedCategory = key;
+      document.querySelectorAll('#catGrid .catbtn').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function buildCurrencyGrid() {
+  const grid = document.getElementById('currencyGrid');
+  grid.innerHTML = '';
+  Object.entries(CURRENCY_SIGNS).forEach(([code, sign]) => {
+    const btn = document.createElement('div');
+    btn.className = 'catbtn' + (code === selectedCurrency ? ' sel' : '');
+    btn.style.fontSize = '15px';
+    btn.innerHTML = `${sign}<span class="t">${code}</span>`;
+    btn.addEventListener('click', () => {
+      selectedCurrency = code;
+      document.querySelectorAll('#currencyGrid .catbtn').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      updateConvertHint();
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function updateConvertHint() {
+  const hint = document.getElementById('convertHint');
+  const amount = Number(document.getElementById('addAmount').value);
+  if (!hint) return;
+  if (selectedCurrency === 'UZS' || !amount || !exchangeRates[selectedCurrency]) {
+    hint.textContent = '';
+    return;
+  }
+  const uzs = Math.round(amount * exchangeRates[selectedCurrency]);
+  hint.textContent = `≈ ${fmt(uzs, 'UZS')}`;
+}
+
+document.getElementById('addAmount').addEventListener('input', updateConvertHint);
+
+let editingId = null;
+
+function resetAddForm() {
+  editingId = null;
+  document.querySelector('#screen-add h1').textContent = "Harajat qo'shish";
+  document.getElementById('addSubmit').textContent = 'Saqlash';
+  document.getElementById('addAmount').value = '';
+  document.getElementById('addNote').value = '';
+  document.getElementById('convertHint').textContent = '';
+  selectedCategory = null;
+  selectedCurrency = 'UZS';
+  document.querySelectorAll('#catGrid .catbtn, #currencyGrid .catbtn').forEach(b => b.classList.remove('sel'));
+}
+
+function openEdit(t) {
+  editingId = t.id;
+  document.querySelector('#screen-add h1').textContent = 'Tahrirlash';
+  document.getElementById('addSubmit').textContent = 'Yangilash';
+  document.getElementById('addAmount').value = t.orig_amount || t.amount;
+  document.getElementById('addNote').value = t.note || '';
+  selectedCategory = t.category;
+  selectedCurrency = t.orig_currency || 'UZS';
+  document.querySelectorAll('#catGrid .catbtn').forEach(b => b.classList.toggle('sel', b.dataset.key === t.category));
+  document.querySelectorAll('#currencyGrid .catbtn').forEach(b => b.classList.toggle('sel', b.textContent.includes(selectedCurrency)));
+  updateConvertHint();
+  switchScreen('add');
+}
+
+document.getElementById('addSubmit').addEventListener('click', async () => {
+  const amount = Number(document.getElementById('addAmount').value);
+  const note = document.getElementById('addNote').value.trim();
+  if (!amount || amount <= 0) return showToast('Summani kiriting');
+  if (!selectedCategory) return showToast('Kategoriyani tanlang');
+  const btn = document.getElementById('addSubmit');
+  btn.disabled = true;
+  try {
+    const payload = { amount, category: selectedCategory, note, currency: selectedCurrency };
+    if (editingId) {
+      await api('/api/expenses/' + editingId, { method: 'PUT', body: JSON.stringify(payload) });
+    } else {
+      await api('/api/expenses', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    tg?.HapticFeedback?.notificationOccurred('success');
+    showToast(editingId ? '✅ Yangilandi' : '✅ Saqlandi');
+    resetAddForm();
+    switchScreen('home');
+  } catch (e) {
+    showToast(e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// "Qo'shish" tugmasi navbardan bosilganda tahrirlash rejimidan chiqib, toza forma ochiladi
+document.querySelector('.navbtn[data-screen="add"]').addEventListener('click', () => {
+  if (!editingId) resetAddForm();
+});
+
+// ----------------------------------------------------------------- sozlamalar
+async function loadSettings() {
+  try {
+    const [s, rates] = await Promise.all([api('/api/settings'), api('/api/rates')]);
+    CATEGORIES = s.categories;
+    CURRENCY_SIGNS = s.currencies;
+    exchangeRates = rates;
+    selectedCurrency = s.currency || 'UZS';
+    buildCategoryGrid();
+    buildCurrencyGrid();
+    document.getElementById('setCurrency').value = s.currency;
+    document.getElementById('setBudget').value = s.budget || '';
+    renderRatesInfo(rates);
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+function renderRatesInfo(rates) {
+  const el = document.getElementById('ratesInfo');
+  if (!el) return;
+  el.innerHTML = ['USD', 'EUR', 'RUB'].map(code =>
+    `<div class="cat-row"><div class="label">1 ${code}</div><div class="amt">${fmt(rates[code], 'UZS')}</div></div>`
+  ).join('');
+}
+
+document.getElementById('setSubmit').addEventListener('click', async () => {
+  const currency = document.getElementById('setCurrency').value;
+  const budget = Number(document.getElementById('setBudget').value) || 0;
+  try {
+    await api('/api/settings', { method: 'POST', body: JSON.stringify({ currency, budget }) });
+    tg?.HapticFeedback?.notificationOccurred('success');
+    showToast('✅ Sozlamalar saqlandi');
+  } catch (e) {
+    showToast(e.message);
+  }
+});
+
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('exportBtn');
+  btn.disabled = true;
+  try {
+    const { token } = await api('/api/export/token');
+    const url = `${API_BASE}/api/export?token=${token}`;
+    if (tg?.openLink) tg.openLink(url); else window.open(url, '_blank');
+  } catch (e) {
+    showToast(e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ---------------------------------------------------------------------------- start
+(async function init() {
+  if (!initData) {
+    showToast('Bu sahifa faqat Telegram ilovasi ichida ishlaydi');
+    return;
+  }
+  await loadSettings();
+  await loadHome();
+})();
+</script>
+</body>
+</html>
